@@ -39,7 +39,14 @@ const studentSchema = new mongoose.Schema({
   profileImage: { type: String, default: "/uploads/default-avatar.png" },
   role: { type: String, default: "Student" },
   notes: [{ course: { type: mongoose.Schema.Types.ObjectId, ref: "Course" }, content: String }],
-  purchasedCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Course" }]
+  purchasedCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Course" }],
+  enrolledCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Course" }],
+  progress: [
+    {
+      course: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
+      percent: { type: Number, default: 0 }
+    }
+  ]
 }, { timestamps: true });
 
 studentSchema.pre("save", async function(next) {

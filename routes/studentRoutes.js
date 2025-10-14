@@ -94,7 +94,8 @@ import {
   loginStudent,
   addOrUpdateNotes,
   updateProgress,
-  getMyCourses
+  getMyCourses,
+  enrollInCourse
 } from "../controllers/studentController.js";
 import { protectStudent } from "../middleware/authMiddleware.js";
 
@@ -104,6 +105,9 @@ router.post("/register", registerStudent);
 router.post("/login", loginStudent);
 router.post("/notes", protectStudent, addOrUpdateNotes);
 router.post("/progress", protectStudent, updateProgress);
+
+// الطالب يسجل في كورس
+router.post("/enroll/:courseId", protectStudent, enrollInCourse);
 router.get("/my-courses", protectStudent, getMyCourses);
 
 export default router;

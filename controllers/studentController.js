@@ -74,13 +74,51 @@ export const updateProgress = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-// 📚 عرض الكورسات اللي اشتراها الطالب
+// 📚 عرض الكورسات اللي الطالب مشترك فيها فعليًا
 export const getMyCourses = async (req, res) => {
   try {
-    const student = await Student.findById(req.user._id).populate("purchasedCourses");
-    res.json(student.purchasedCourses);
+    const student = await Student.findById(req.user._id)
+      .populate({
+        path: "enrolledCourses",
+        select: "title description price instructor", // اختياري
+        populate: { path: "instructor", select: "name email" }
+      });
+
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    res.json(student.enrolledCourses);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("❌ Error fetching enrolled courses:", error);
+    res.status(500).json({ message: "Error fetching enrolled courses", error: error.message });
+  }
+}
+
+// 🧑‍🎓 تسجيل طالب في كورس
+export const enrollInCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const studentId = req.user._id;
+
+    const course = await Course.findById(courseId);
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    // تأكدي إنه مش مسجّل قبل كده
+    if (course.enrolledStudents.includes(studentId)) {
+      return res.status(400).json({ message: "Student already enrolled in this course" });
+    }
+
+    // ضيف الطالب للكورس
+    course.enrolledStudents.push(studentId);
+    await course.save();
+
+    // ضيف الكورس لقائمة الطالب
+    const student = await Student.findById(studentId);
+    student.enrolledCourses.push(courseId);
+    await student.save();
+
+    res.json({ message: "Enrolled successfully", course });
+  } catch (error) {
+    console.error("❌ Enrollment error:", error);
+    res.status(500).json({ message: "Error enrolling in course", error: error.message });
   }
 };
