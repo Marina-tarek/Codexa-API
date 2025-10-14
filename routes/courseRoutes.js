@@ -51,18 +51,58 @@
 // router.get("/:id", getCourse);
 
 // export default router;
+// ====================
+// import express from "express";
+// import { createCourse, getAllCourses, getCourseById, deleteCourse } from "../controllers/courseController.js";
+// import { protectInstructor, protectAdmin } from "../middleware/authMiddleware.js";
+// import multer from "multer";
 
+// const router = express.Router();
+// const upload = multer({ dest: "uploads/" });
+
+// router.post("/", protectInstructor, upload.single("video"), createCourse);
+// router.get("/", getAllCourses);
+// router.get("/:id", getCourseById);
+// router.delete("/:id", protectAdmin, deleteCourse);
+
+// export default router;
+// ======
 import express from "express";
-import { createCourse, getAllCourses, getCourseById, deleteCourse } from "../controllers/courseController.js";
-import { protectInstructor, protectAdmin } from "../middleware/authMiddleware.js";
 import multer from "multer";
+import {
+  createCourse,
+  addVideosToCourse,
+  deleteVideoFromCourse,
+  deleteCourse,
+    getAllCourses,
+    getCourseById,
+    updateCourse
+} from "../controllers/courseController.js";
+import { protectInstructor } from "../middleware/authMiddleware.js";
+
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
-router.post("/", protectInstructor, upload.single("video"), createCourse);
-router.get("/", getAllCourses);
-router.get("/:id", getCourseById);
-router.delete("/:id", protectAdmin, deleteCourse);
+// إنشاء كورس جديد مع أكثر من فيديو
+router.post("/", protectInstructor, upload.array("videos"), createCourse);
 
+// إضافة فيديوهات جديدة إلى كورس موجود
+router.post("/:id/videos", protectInstructor, upload.array("videos"), addVideosToCourse);
+
+// حذف فيديو من كورس
+router.delete("/:courseId/videos/:videoId", protectInstructor, deleteVideoFromCourse);
+
+// حذف الكورس بالكامل
+router.delete("/:id", protectInstructor, deleteCourse);
+
+
+// 🆕 جلب كل الكورسات
+router.get("/", getAllCourses);
+
+router.get("/:id", getCourseById);
+
+router.put("/:id", protectInstructor, updateCourse);
 export default router;
+
+

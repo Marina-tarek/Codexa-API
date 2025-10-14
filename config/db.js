@@ -1,14 +1,31 @@
-// config/db.js
+// // config/db.js
+// import mongoose from "mongoose";
+
+// const connectDB = async () => {
+//   try {
+//     await mongoose.connect(process.env.MONGO_URI, {
+//       // options optional for modern mongoose
+//     });
+//     console.log("✅ MongoDB atlas connected");
+//   } catch (error) {
+//     console.error("❌ MongoDB connection error:", error.message);
+//     process.exit(1);
+//   }
+// };
+
+// export default connectDB;
+// =====
 import mongoose from "mongoose";
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      // options optional for modern mongoose
+    const conn = await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
     });
-    console.log("✅ MongoDB atlas connected");
+    console.log(`✅ MongoDB connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error("❌ MongoDB connection error:", error.message);
+    console.error(`❌ MongoDB connection error: ${error.message}`);
     process.exit(1);
   }
 };
