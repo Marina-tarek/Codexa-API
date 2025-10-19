@@ -88,6 +88,7 @@
 // router.get("/progress/:courseId", protect, getProgress);
 
 // export default router;
+//-------------------------new---------------mustafa updates------------------------
 import express from "express";
 import {
   registerStudent,
@@ -95,7 +96,8 @@ import {
   addOrUpdateNotes,
   updateProgress,
   getMyCourses,
-  enrollInCourse
+  enrollInCourse,
+  socialLoginStudent
 } from "../controllers/studentController.js";
 import { protectStudent } from "../middleware/authMiddleware.js";
 
@@ -103,6 +105,7 @@ const router = express.Router();
 
 router.post("/register", registerStudent);
 router.post("/login", loginStudent);
+router.post("/social-login", socialLoginStudent);
 router.post("/notes", protectStudent, addOrUpdateNotes);
 router.post("/progress", protectStudent, updateProgress);
 

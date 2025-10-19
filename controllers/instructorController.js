@@ -3,6 +3,7 @@ import Course from "../models/courseModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cloudinary from "../utils/cloudinary.js";
+import { verifyFirebaseToken } from "../utils/verifyFirebaseToken.js";
 
 // export const registerInstructor = async (req, res) => {
 //   try {
@@ -18,6 +19,13 @@ import cloudinary from "../utils/cloudinary.js";
 //     res.status(500).json({ message: error.message });
 //   }
 // };
+const generateToken = (instructor) => {
+  return jwt.sign(
+    { id: instructor._id, role: "Instructor" },
+    process.env.JWT_SECRET,
+    { expiresIn: "30d" }
+  );
+};
 export const registerInstructor = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -29,13 +37,7 @@ export const registerInstructor = async (req, res) => {
       email,
       password, // الـ model هيشفره تلقائي
     });
-
-    const token = jwt.sign(
-      { id: instructor._id, role: "Instructor" },
-      process.env.JWT_SECRET,
-      { expiresIn: "30d" }
-    );
-
+    const token = generateToken(instructor);
     res.json({ token, instructor });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -43,7 +45,7 @@ export const registerInstructor = async (req, res) => {
 };
 
 export const loginInstructor = async (req, res) => {
-  
+
   try {
     const { email, password } = req.body;
     const instructor = await Instructor.findOne({ email });
@@ -52,11 +54,55 @@ export const loginInstructor = async (req, res) => {
     const isMatch = await bcrypt.compare(password, instructor.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign({ id: instructor._id, role: "Instructor" }, process.env.JWT_SECRET, { expiresIn: "30d" });
+    const token = generateToken(instructor);
 
     res.json({ token, instructor });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// _____________________Mustafa Edits_____________________
+export const socialLoginInstructor = async (req, res) => {
+  try {
+    const { token } = req.body; // Firebase ID token
+    if (!token) return res.status(400).json({ message: "No token provided" });
+
+    const decoded = await verifyFirebaseToken(token);
+    if (!decoded) return res.status(401).json({ message: "Invalid Firebase token" });
+
+    const { email, name, picture } = decoded;
+    let provider = decoded.firebase?.sign_in_provider || "google";
+
+    // Map Firebase provider to your enum values
+    if (provider === "google.com") provider = "google";
+    else if (provider === "github.com") provider = "github";
+
+
+    let instructor = await Instructor.findOne({ email });
+
+    if (!instructor) {
+      // create if first time social login
+      instructor = await Instructor.create({
+        name: name || "New User",
+        email,
+        profileImage: picture || "/uploads/default-avatar.png",
+        authProvider: provider,
+        emailVerified: true,
+      });
+    } else {
+      // update profile if changed
+      if (!instructor.profileImage && picture) instructor.profileImage = picture;
+      if (!instructor.emailVerified) instructor.emailVerified = true;
+      if (instructor.authProvider !== provider) instructor.authProvider = provider;
+      await instructor.save();
+    }
+
+    const jwtToken = generateToken(instructor);
+    res.json({ token: jwtToken, instructor });
+  } catch (err) {
+    console.error("🔥 Social Login Error:", err);
+    res.status(500).json({ message: err.message });
   }
 };
 
