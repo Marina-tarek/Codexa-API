@@ -102,7 +102,7 @@
 
 // export default router;
 import express from "express";
-import { registerInstructor, loginInstructor, createCourse, getInstructorStats } from "../controllers/instructorController.js";
+import { registerInstructor, loginInstructor, createCourse, getInstructorStats, socialLoginInstructor } from "../controllers/instructorController.js";
 import { protectInstructor } from "../middleware/authMiddleware.js";
 import multer from "multer";
 
@@ -111,6 +111,7 @@ const upload = multer({ dest: "uploads/" });
 
 router.post("/register", registerInstructor);
 router.post("/login", loginInstructor);
+router.post("/social-login", socialLoginInstructor);
 router.post("/courses", protectInstructor, upload.single("video"), createCourse);
 router.get("/stats", protectInstructor, getInstructorStats);
 
