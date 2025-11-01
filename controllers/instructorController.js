@@ -143,19 +143,97 @@ export const createCourse = async (req, res) => {
 // };
 export const getInstructorStats = async (req, res) => {
   try {
-    const courses = await Course.find({ instructor: req.user._id });
+    const courses = await Course.find({ instructor: req.user._id }).select("_id title enrolledStudents");
+    const courseIds = courses.map((c) => c._id);
 
-    // ✅ استخدمي enrolledStudents بدل students
     const totalStudents = courses.reduce((acc, c) => acc + (c.enrolledStudents?.length || 0), 0);
 
-    // ✅ لو مفيش حقل sales في الموديل، خليه صفر مؤقتاً
-    const totalSales = courses.reduce((acc, c) => acc + (c.sales || 0), 0);
+    // completed by course using Student.progress
+    const Student = (await import("../models/studentModel.js")).default;
+    const completedAgg = await Student.aggregate([
+      { $match: { "progress.course": { $in: courseIds } } },
+      { $unwind: "$progress" },
+      { $match: { "progress.course": { $in: courseIds }, "progress.percent": { $gte: 100 } } },
+      { $group: { _id: "$progress.course", count: { $sum: 1 } } },
+    ]);
+    const completedByCourse = Object.fromEntries(completedAgg.map((x) => [x._id.toString(), x.count]));
+    const totalCompleted = Object.values(completedByCourse).reduce((a, b) => a + b, 0);
+
+    // revenue from payments
+    const Payment = (await import("../models/paymentModel.js")).default;
+    const payments = await Payment.find({ instructor: req.user._id, paymentStatus: "completed" });
+    const totalRevenue = payments.reduce((acc, p) => acc + (p.amount || 0), 0);
+
+    // online students (placeholder)
+    const onlineStudents = 0;
 
     res.json({
       totalCourses: courses.length,
       totalStudents,
-      totalSales
+      totalCompleted,
+      totalRevenue,
+      onlineStudents,
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ============== New: Profile endpoints ==============
+export const updateInstructorProfile = async (req, res) => {
+  try {
+    const instructor = await Instructor.findById(req.user._id);
+    if (!instructor) return res.status(404).json({ message: "Not found" });
+    const { name, bio, links } = req.body;
+    if (name) instructor.name = name;
+    if (bio !== undefined) instructor.bio = bio;
+    if (links) {
+      try {
+        instructor.links = Array.isArray(links) ? links : JSON.parse(links);
+      } catch {
+        instructor.links = [];
+      }
+    }
+    if (req.file?.path || req.file?.secure_url) {
+      instructor.profileImage = req.file.secure_url || req.file.path;
+    }
+    await instructor.save();
+    res.json({ message: "Profile updated", instructor });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const changeInstructorPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) return res.status(400).json({ message: "currentPassword and newPassword required" });
+    const instructor = await Instructor.findById(req.user._id);
+    if (!instructor) return res.status(404).json({ message: "Not found" });
+    if (!instructor.password) return res.status(400).json({ message: "Password not set for social account" });
+    const match = await bcrypt.compare(currentPassword, instructor.password);
+    if (!match) return res.status(400).json({ message: "Current password incorrect" });
+    instructor.password = newPassword;
+    await instructor.save();
+    res.json({ message: "Password changed" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getInstructorProfile = async (req, res) => {
+  try {
+    const instructor = await Instructor.findById(req.params.id).select("-password");
+    if (!instructor) return res.status(404).json({ message: "Not found" });
+    const Follow = (await import("../models/followModel.js")).default;
+    const Payment = (await import("../models/paymentModel.js")).default;
+    const [followers, following] = await Promise.all([
+      Follow.countDocuments({ following: instructor._id }),
+      Follow.countDocuments({ follower: instructor._id }),
+    ]);
+    const payments = await Payment.find({ instructor: instructor._id, paymentStatus: "completed" });
+    const revenue = payments.reduce((acc, p) => acc + (p.amount || 0), 0);
+    res.json({ instructor, followers, following, revenue });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

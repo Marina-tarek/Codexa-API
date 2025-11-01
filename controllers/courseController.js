@@ -268,3 +268,22 @@ export const updateCourse = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+// 🆕 عرض كل الكورسات الخاصة بمدرب معين (للطلاب)
+export const getCoursesByInstructor = async (req, res) => {
+  try {
+    const { instructorId } = req.params;
+
+    const courses = await Course.find({ instructor: instructorId })
+      .populate("instructor", "name profileImage")
+      .sort({ createdAt: -1 });
+
+    if (!courses || courses.length === 0) {
+      return res.status(404).json({ message: "No courses found for this instructor" });
+    }
+
+    res.json(courses);
+  } catch (error) {
+    console.error("❌ Error fetching instructor courses:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
