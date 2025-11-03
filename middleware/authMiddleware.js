@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import Instructor from "../models/instructorModel.js";
 import Student from "../models/studentModel.js";
 import Admin from "../models/adminModel.js";
-
+export { protectAny as protect };
 export const protectInstructor = async (req, res, next) => {
   let token;
   if (req.headers.authorization?.startsWith("Bearer")) {
@@ -94,3 +94,34 @@ export const protectAny = async (req, res, next) => {
     res.status(401).json({ message: "Invalid token" });
   }
 };
+// // حماية عامة لأي نوع مستخدم
+// export const protectAny = async (req, res, next) => {
+//   let token;
+//   if (req.headers.authorization?.startsWith("Bearer")) {
+//     token = req.headers.authorization.split(" ")[1];
+//   }
+//   if (!token) return res.status(401).json({ message: "No token" });
+
+//   try {
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+//     let user =
+//       (await Instructor.findById(decoded.id)) ||
+//       (await Student.findById(decoded.id)) ||
+//       (await Admin.findById(decoded.id));
+
+//     if (!user) return res.status(401).json({ message: "Unauthorized" });
+
+//     req.user = user;
+//     req.userType =
+//       user instanceof Instructor
+//         ? "Instructor"
+//         : user instanceof Student
+//         ? "Student"
+//         : "Admin";
+
+//     next();
+//   } catch {
+//     res.status(401).json({ message: "Invalid token" });
+//   }
+// };
