@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cloudinary from "../utils/cloudinary.js";
 import { verifyFirebaseToken } from "../utils/verifyFirebaseToken.js";
+import { sendResetCodeEmail } from "../utils/emailService.js";
 
 // export const registerInstructor = async (req, res) => {
 //   try {
@@ -236,6 +237,167 @@ export const getInstructorProfile = async (req, res) => {
     res.json({ instructor, followers, following, revenue });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// ------------------- 🔑 Forgot Password -------------------
+export const forgotPasswordInstructor = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    // البحث عن المدرس
+    const instructor = await Instructor.findOne({ email: email.toLowerCase() });
+
+    // للأمان: نفس الرسالة سواء المستخدم موجود أو لا
+    if (!instructor) {
+      return res.status(200).json({
+        message: "If the email exists, a reset code has been sent",
+      });
+    }
+
+    // التحقق من أن المستخدم مسجل بالإيميل وليس social login
+    if (instructor.authProvider !== "email" || !instructor.password) {
+      return res.status(400).json({
+        message: "This account uses social login. Password reset is not available.",
+      });
+    }
+
+    // توليد كود عشوائي من 6 أرقام
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // حفظ الكود وتاريخ انتهاء الصلاحية (10 دقائق)
+    instructor.resetPasswordCode = resetCode;
+    instructor.resetPasswordCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    await instructor.save();
+
+    // إرسال الإيميل
+    try {
+      await sendResetCodeEmail(instructor.email, resetCode, instructor.name);
+      res.status(200).json({
+        message: "Reset code has been sent to your email",
+      });
+    } catch (emailError) {
+      console.error("Email error:", emailError);
+      // حذف الكود في حالة فشل الإرسال
+      instructor.resetPasswordCode = null;
+      instructor.resetPasswordCodeExpires = null;
+      await instructor.save();
+      return res.status(500).json({
+        message: "Failed to send email. Please try again later.",
+      });
+    }
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// ------------------- ✅ Verify Reset Code -------------------
+export const verifyResetCodeInstructor = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      return res.status(400).json({ message: "Email and code are required" });
+    }
+
+    const instructor = await Instructor.findOne({ email: email.toLowerCase() });
+
+    if (!instructor) {
+      return res.status(404).json({ message: "Instructor not found" });
+    }
+
+    // التحقق من وجود الكود
+    if (!instructor.resetPasswordCode) {
+      return res.status(400).json({ message: "No reset code found. Please request a new one." });
+    }
+
+    // التحقق من صحة الكود
+    if (instructor.resetPasswordCode !== code) {
+      return res.status(400).json({ message: "Invalid reset code" });
+    }
+
+    // التحقق من انتهاء الصلاحية
+    if (new Date() > instructor.resetPasswordCodeExpires) {
+      instructor.resetPasswordCode = null;
+      instructor.resetPasswordCodeExpires = null;
+      await instructor.save();
+      return res.status(400).json({ message: "Reset code has expired. Please request a new one." });
+    }
+
+    // الكود صحيح
+    res.status(200).json({
+      message: "Reset code verified successfully",
+      verified: true,
+    });
+  } catch (error) {
+    console.error("Verify code error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// ------------------- 🔄 Reset Password -------------------
+export const resetPasswordInstructor = async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({
+        message: "Email, code, and newPassword are required",
+      });
+    }
+
+    // التحقق من طول كلمة المرور
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters long",
+      });
+    }
+
+    const instructor = await Instructor.findOne({ email: email.toLowerCase() });
+
+    if (!instructor) {
+      return res.status(404).json({ message: "Instructor not found" });
+    }
+
+    // التحقق من وجود الكود
+    if (!instructor.resetPasswordCode) {
+      return res.status(400).json({
+        message: "No reset code found. Please request a new one.",
+      });
+    }
+
+    // التحقق من صحة الكود
+    if (instructor.resetPasswordCode !== code) {
+      return res.status(400).json({ message: "Invalid reset code" });
+    }
+
+    // التحقق من انتهاء الصلاحية
+    if (new Date() > instructor.resetPasswordCodeExpires) {
+      instructor.resetPasswordCode = null;
+      instructor.resetPasswordCodeExpires = null;
+      await instructor.save();
+      return res.status(400).json({
+        message: "Reset code has expired. Please request a new one.",
+      });
+    }
+
+    // تحديث كلمة المرور
+    instructor.password = newPassword;
+    instructor.resetPasswordCode = null;
+    instructor.resetPasswordCodeExpires = null;
+    await instructor.save(); // الـ pre-save hook سيشفر كلمة المرور تلقائياً
+
+    res.status(200).json({
+      message: "Password has been reset successfully",
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 

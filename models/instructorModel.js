@@ -48,6 +48,16 @@ const instructorSchema = new mongoose.Schema(
       default: false,
     },
 
+    resetPasswordCode: {
+      type: String,
+      default: null,
+    },
+
+    resetPasswordCodeExpires: {
+      type: Date,
+      default: null,
+    },
+
     authProvider: {
       type: String,
       enum: ["email", "google", "github"],

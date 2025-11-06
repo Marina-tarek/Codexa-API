@@ -1,5 +1,17 @@
 import express from "express";
-import { registerInstructor, loginInstructor, createCourse, getInstructorStats, socialLoginInstructor, updateInstructorProfile, changeInstructorPassword, getInstructorProfile } from "../controllers/instructorController.js";
+import { 
+  registerInstructor, 
+  loginInstructor, 
+  createCourse, 
+  getInstructorStats, 
+  socialLoginInstructor, 
+  updateInstructorProfile, 
+  changeInstructorPassword, 
+  getInstructorProfile,
+  forgotPasswordInstructor,
+  verifyResetCodeInstructor,
+  resetPasswordInstructor
+} from "../controllers/instructorController.js";
 import { protectInstructor } from "../middleware/authMiddleware.js";
 import { uploadProfile } from "../middleware/uploadMiddleware.js";
 
@@ -16,5 +28,10 @@ router.get("/stats", protectInstructor, getInstructorStats);
 router.put("/profile", protectInstructor, uploadProfile.single("profileImage"), updateInstructorProfile);
 router.put("/change-password", protectInstructor, changeInstructorPassword);
 router.get("/profile/:id", getInstructorProfile);
+
+// Forget Password Routes
+router.post("/forgot-password", forgotPasswordInstructor);
+router.post("/verify-reset-code", verifyResetCodeInstructor);
+router.post("/reset-password", resetPasswordInstructor);
 
 export default router;
