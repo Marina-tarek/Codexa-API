@@ -29,17 +29,18 @@ const app = express();
 const allowedOrigins = [
   "https://codexa-nine.vercel.app", 
   "http://localhost:5000",
+  "http://localhost:3000"
 ];
 
 
 // ✅ إعدادات CORS صحيحة تمامًا
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
+    // } else {
+    //   callback(new Error("Not allowed by CORS"));
+    // }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
