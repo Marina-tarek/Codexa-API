@@ -42,7 +42,7 @@ const courseSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     description: String,
-    price: Number,
+    price: { type: Number, default: 0 },
     category: String,
     instructor: { type: mongoose.Schema.Types.ObjectId, ref: "Instructor", required: true },
     videos: [videoSchema], // 🆕 بدل videoUrl
@@ -53,6 +53,28 @@ const courseSchema = new mongoose.Schema(
         percentage: { type: Number, default: 0 },
       },
     ],
+    // 🆕 Cover Image للكورس
+    coverImage: {
+      url: { type: String, default: null },
+      public_id: { type: String, default: null },
+    },
+    // 🆕 Level of Course
+    level: {
+      type: String,
+      enum: ["beginner", "intermediate", "advanced"],
+      default: "beginner",
+    },
+    // 🆕 Status of Course
+    status: {
+      type: String,
+      enum: ["private", "public"],
+      default: "public",
+    },
+    // 🆕 Prerequisites - المتطلبات المسبقة
+    prerequisites: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );
