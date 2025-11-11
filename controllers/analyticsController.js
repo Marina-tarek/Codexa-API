@@ -100,12 +100,20 @@ export const getAdminAnalytics = async (req, res) => {
 				Report.countDocuments({}),
 			]);
 
+		// Site-wide revenue (sum of completed payments)
+		const siteRevenueAgg = await Payment.aggregate([
+			{ $match: { paymentStatus: "completed" } },
+			{ $group: { _id: null, total: { $sum: "$amount" } } },
+		]);
+		const totalSiteRevenue = siteRevenueAgg[0]?.total || 0;
+
 		return res.json({
 			totalInstructors,
 			totalStudents,
 			adminTodoDone,
 			adminTodoPending,
 			totalReports,
+			totalSiteRevenue,
 		});
 	} catch (error) {
 		return res.status(500).json({ message: error.message });
