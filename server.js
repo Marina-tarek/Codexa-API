@@ -21,6 +21,7 @@ import reviewRoutes from "./routes/reviewRoutes.js";
 import todoRoutes from "./routes/todoRoutes.js";
 import adminCommunityRoutes from "./routes/adminCommunityRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
+import favouriteRoutes from "./routes/favouriteRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -87,6 +88,7 @@ const startServer = async () => {
     app.use("/api/todos", todoRoutes);
     app.use("/api/admin/community", adminCommunityRoutes);
     app.use("/api/analytics", analyticsRoutes);
+    app.use("/api/favourites", favouriteRoutes);
     // ✅ إعداد Socket.IO
     io.on("connection", (socket) => {
       console.log("🟢 User connected:", socket.id);
