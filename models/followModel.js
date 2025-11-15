@@ -1,15 +1,3 @@
-// // models/Follow.js
-// import mongoose from "mongoose";
-
-// const followSchema = new mongoose.Schema({
-//   follower: { type: mongoose.Schema.Types.ObjectId, refPath: "followerType", required: true },
-//   followerType: { type: String, enum: ["Instructor", "Student"], required: true },
-//   following: { type: mongoose.Schema.Types.ObjectId, refPath: "followingType", required: true },
-//   followingType: { type: String, enum: ["Instructor", "Student"], required: true },
-//   createdAt: { type: Date, default: Date.now },
-// });
-
-// export default mongoose.model("Follow", followSchema);
 import mongoose from "mongoose";
 
 const followSchema = new mongoose.Schema({
