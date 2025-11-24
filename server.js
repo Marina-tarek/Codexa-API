@@ -23,6 +23,8 @@ import todoRoutes from "./routes/todoRoutes.js";
 import adminCommunityRoutes from "./routes/adminCommunityRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
 import favouriteRoutes from "./routes/favouriteRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -53,7 +55,11 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
-app.use(express.json());
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf.toString();
+  }
+}));
 app.use(morgan("dev"));
 
 // ✅ 3) إعداد Socket.IO مع نفس إعدادات CORS
@@ -91,6 +97,8 @@ const startServer = async () => {
     app.use("/api/admin/community", adminCommunityRoutes);
     app.use("/api/analytics", analyticsRoutes);
     app.use("/api/favourites", favouriteRoutes);
+    app.use("/api/cart", cartRoutes);
+    app.use("/api/orders", orderRoutes);
     // ✅ إعداد Socket.IO
     io.on("connection", (socket) => {
       console.log("🟢 User connected:", socket.id);
