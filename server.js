@@ -6,6 +6,7 @@ import http from "http";
 import { Server } from "socket.io";
 import connectDB from "./config/db.js";
 import cloudinary from "./utils/cloudinary.js";
+import morgan from "morgan";
 
 // ✅ Routes imports
 import instructorRoutes from "./routes/instructorRoutes.js";
@@ -29,7 +30,7 @@ const app = express();
 
 // ✅ 2) إعدادات CORS الرسمية
 const allowedOrigins = [
-  "https://codexa-nine.vercel.app", 
+  "https://codexa-nine.vercel.app",
   "http://localhost:5000",
   "http://localhost:3000"
 ];
@@ -39,7 +40,7 @@ const allowedOrigins = [
 const corsOptions = {
   origin: function (origin, callback) {
     // if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+    callback(null, true);
     // } else {
     //   callback(new Error("Not allowed by CORS"));
     // }
@@ -53,6 +54,7 @@ app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
 app.use(express.json());
+app.use(morgan("dev"));
 
 // ✅ 3) إعداد Socket.IO مع نفس إعدادات CORS
 const server = http.createServer(app);

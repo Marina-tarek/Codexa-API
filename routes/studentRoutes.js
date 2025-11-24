@@ -6,6 +6,7 @@ import {
   updateProgress,
   getMyCourses,
   enrollInCourse,
+  getStudentCourseById,
   socialLoginStudent,
   forgotPasswordStudent,
   verifyResetCodeStudent,
@@ -24,6 +25,7 @@ router.post("/progress", protectStudent, updateProgress);
 // الطالب يسجل في كورس
 router.post("/enroll/:courseId", protectStudent, enrollInCourse);
 router.get("/my-courses", protectStudent, getMyCourses);
+router.get("/my-courses/:courseId", protectStudent, getStudentCourseById);
 
 // Forget Password Routes
 router.post("/forgot-password", forgotPasswordStudent);

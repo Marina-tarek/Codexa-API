@@ -154,6 +154,55 @@ export const getMyCourses = async (req, res) => {
   }
 };
 
+// ------------------- 📘 Get Single Course by ID -------------------
+export const getStudentCourseById = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    if (!courseId)
+      return res.status(400).json({ message: "Missing course ID" });
+
+    // 1) Find student
+    const student = await Student.findById(req.user._id).select("enrolledCourses");
+
+    if (!student)
+      return res.status(404).json({ message: "Student not found" });
+
+    console.log("Student enrolledCourses:", student.enrolledCourses);
+    console.log("Requested courseId:", courseId);
+
+    // 2) Convert ObjectIds to strings
+    const enrolledIds = student.enrolledCourses.map(id => id.toString());
+
+    const isEnrolled = enrolledIds.includes(courseId);
+
+    console.log("Matched?", isEnrolled);
+
+    if (!isEnrolled) {
+      return res.status(403).json({
+        message: "Access denied. You are not enrolled in this course.",
+      });
+    }
+
+    // 3) Fetch full course details
+    const course = await Course.findById(courseId)
+      .select("-enrolledStudents")
+      .populate("instructor", "name email profileImage bio")
+
+    if (!course)
+      return res.status(404).json({ message: "Course not found" });
+
+    res.json(course);
+  } catch (error) {
+    console.error("Error fetching course:", error);
+    res.status(500).json({
+      message: "Error fetching course",
+      error: error.message,
+    });
+  }
+};
+
+
 // ------------------- 🧑‍🎓 Enroll -------------------
 export const enrollInCourse = async (req, res) => {
   try {

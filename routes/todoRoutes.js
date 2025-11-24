@@ -7,7 +7,7 @@ const router = express.Router();
 router.post("/", protectAny, createTodo);
 router.get("/", protectAny, listTodos);
 router.put("/:id", protectAny, updateTodo);
-router.patch("/:id/done", protectAny, setDone);
+router.put("/:id/done", protectAny, setDone);
 router.delete("/:id", protectAny, deleteTodo);
 router.get("/stats/summary", protectAny, getStats);
 
