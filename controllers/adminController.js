@@ -1,118 +1,3 @@
-// // // controllers/adminController.js
-// // import Instructor from "../models/Instructor.js";
-// // import Student from "../models/Student.js";
-// // import Course from "../models/Course.js";
-// // import CommunityPost from "../models/CommunityPost.js";
-// // import Purchase from "../models/Purchase.js";
-// // import Notification from "../models/Notification.js";
-
-// // export const getStats = async (req, res) => {
-// //   try {
-// //     const totalInstructors = await Instructor.countDocuments();
-// //     const totalStudents = await Student.countDocuments();
-// //     const totalCourses = await Course.countDocuments();
-// //     const purchases = await Purchase.find().lean();
-// //     const totalRevenue = purchases.reduce((acc, p) => acc + (p.price || 0), 0);
-
-// //     const courses = await Course.find().select("title price students").lean();
-// //     const coursesStats = courses.map(c => ({ _id: c._id, title: c.title, studentsCount: (c.students||[]).length, price: c.price || 0, revenue: ((c.students||[]).length)*(c.price || 0) }));
-
-// //     res.json({ totalInstructors, totalStudents, totalCourses, totalRevenue, courses: coursesStats });
-// //   } catch (error) {
-// //     res.status(500).json({ message: error.message });
-// //   }
-// // };
-
-// // export const listInstructors = async (req, res) => {
-// //   try {
-// //     const instructors = await Instructor.find().select("name email profileImage isActive").lean();
-// //     const purchases = await Purchase.find().lean();
-// //     const revenueMap = {};
-// //     purchases.forEach(p => { revenueMap[p.instructor.toString()] = (revenueMap[p.instructor.toString()] || 0) + (p.price || 0); });
-// //     const result = instructors.map(i => ({ ...i, revenue: revenueMap[i._id.toString()] || 0 }));
-// //     res.json(result);
-// //   } catch (error) {
-// //     res.status(500).json({ message: error.message });
-// //   }
-// // };
-
-// // export const listStudents = async (req, res) => {
-// //   try {
-// //     const students = await Student.find().select("name email profileImage isActive enrolledCourses").lean();
-// //     res.json(students);
-// //   } catch (error) {
-// //     res.status(500).json({ message: error.message });
-// //   }
-// // };
-
-// // export const deleteCourse = async (req, res) => {
-// //   try {
-// //     const course = await Course.findById(req.params.id);
-// //     if (!course) return res.status(404).json({ message: "Course not found" });
-// //     await course.deleteOne();
-// //     await Notification.create({ receiver: course.instructor, receiverType: "Instructor", sender: req.user._id, senderType: req.userType, type: "admin", message: `Admin removed course "${course.title}" `});
-// //     res.json({ message: "Course removed" });
-// //   } catch (error) {
-// //     res.status(500).json({ message: error.message });
-// //   }
-// // };
-
-// // export const getCommunity = async (req, res) => {
-// //   try {
-// //     const posts = await CommunityPost.find().populate("author", "name profileImage").populate("comments.user", "name profileImage").sort({ createdAt: -1 });
-// //     res.json(posts);
-// //   } catch (error) {
-// //     res.status(500).json({ message: error.message });
-// //   }
-// // };
-
-// // export const deletePost = async (req, res) => {
-// //   try {
-// //     await CommunityPost.findByIdAndDelete(req.params.id);
-// //     res.json({ message: "Post deleted" });
-// //   } catch (error) {
-// //     res.status(500).json({ message: error.message });
-// //   }
-// // };
-// import Admin from "../models/adminModel.js";
-// import Instructor from "../models/instructorModel.js";
-// import Student from "../models/studentModel.js";
-// import Course from "../models/courseModel.js";
-// import Payment from "../models/paymentModel.js";
-// import bcrypt from "bcryptjs";
-// import jwt from "jsonwebtoken";
-
-// export const loginAdmin = async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
-//     const admin = await Admin.findOne({ email });
-//     if (!admin) return res.status(404).json({ message: "Admin not found" });
-
-//     const isMatch = await bcrypt.compare(password, admin.password);
-//     if (!isMatch) return res.status(400).json({ message: "Invalid password" });
-
-//     const token = jwt.sign({ id: admin._id, role: "Admin" }, process.env.JWT_SECRET, { expiresIn: "30d" });
-//     res.json({ token, admin });
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
-// export const getDashboardStats = async (req, res) => {
-//   try {
-//     const instructors = await Instructor.countDocuments();
-//     const students = await Student.countDocuments();
-//     const courses = await Course.countDocuments();
-//     const payments = await Payment.find();
-
-//     const totalRevenue = payments.reduce((acc, p) => acc + (p.amount || 0), 0);
-
-//     res.json({ instructors, students, courses, totalRevenue });
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-//====
 import Admin from "../models/adminModel.js";
 import Instructor from "../models/instructorModel.js";
 import Student from "../models/studentModel.js";
@@ -120,18 +5,20 @@ import Course from "../models/courseModel.js";
 import Payment from "../models/paymentModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import cloudinary from "../utils/cloudinary.js";
+import admin from "../config/firebaseAdmin.js";
 
 export const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const admin = await Admin.findOne({ email });
-    if (!admin) return res.status(404).json({ message: "Admin not found" });
+    const adminUser = await Admin.findOne({ email });
+    if (!adminUser) return res.status(404).json({ message: "Admin not found" });
 
-    const isMatch = await bcrypt.compare(password, admin.password);
+    const isMatch = await bcrypt.compare(password, adminUser.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid password" });
 
-    const token = jwt.sign({ id: admin._id, role: "Admin" }, process.env.JWT_SECRET, { expiresIn: "30d" });
-    res.json({ token, admin });
+    const token = jwt.sign({ id: adminUser._id, role: "Admin" }, process.env.JWT_SECRET, { expiresIn: "30d" });
+    res.json({ token, admin: adminUser });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -148,6 +35,297 @@ export const getDashboardStats = async (req, res) => {
 
     res.json({ instructors, students, courses, totalRevenue });
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getAllStudents = async (req, res) => {
+  try {
+    const students = await Student.find().select("name profileImage");
+    const count = await Student.countDocuments();
+
+    // Map profileImage to image to match requirements
+    const formattedStudents = students.map(student => ({
+      _id: student._id,
+      name: student.name,
+      image: student.profileImage
+    }));
+
+    res.json({ count, students: formattedStudents });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getStudentById = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id).select("-password");
+    if (!student) return res.status(404).json({ message: "Student not found" });
+    res.json(student);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getAllInstructors = async (req, res) => {
+  try {
+    const instructors = await Instructor.find().select("name profileImage");
+    const count = await Instructor.countDocuments();
+
+    // Map profileImage to image to match requirements
+    const formattedInstructors = instructors.map(instructor => ({
+      _id: instructor._id,
+      name: instructor.name,
+      image: instructor.profileImage
+    }));
+
+    res.json({ count, instructors: formattedInstructors });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getInstructorById = async (req, res) => {
+  try {
+    const instructor = await Instructor.findById(req.params.id).select("-password");
+    if (!instructor) return res.status(404).json({ message: "Instructor not found" });
+    res.json(instructor);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get all courses for admin
+export const getAllCourses = async (req, res) => {
+  try {
+    const courses = await Course.find()
+      .populate("instructor", "name profileImage email")
+      .sort({ createdAt: -1 });
+    const count = await Course.countDocuments();
+
+    res.json({ count, courses });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get course by ID for admin (with full details)
+export const getCourseById = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id)
+      .populate("instructor", "name profileImage email bio links")
+      .populate("enrolledStudents", "name profileImage email");
+
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    // Calculate total video duration if needed (optional)
+    const totalVideos = course.videos.length;
+
+    // Format response with complete details
+    const courseDetails = {
+      _id: course._id,
+      title: course.title,
+      description: course.description,
+      price: course.price,
+      category: course.category,
+      level: course.level,
+      status: course.status,
+      prerequisites: course.prerequisites,
+
+      // Instructor details
+      instructor: course.instructor,
+
+      // Cover image
+      coverImage: course.coverImage,
+
+      // Videos with full details
+      videos: course.videos.map((video, index) => ({
+        index: index + 1,
+        title: video.title,
+        url: video.url,
+        public_id: video.public_id,
+        _id: video._id
+      })),
+
+      // Statistics
+      statistics: {
+        totalVideos: totalVideos,
+        enrolledStudentsCount: course.enrolledStudents.length,
+        createdAt: course.createdAt,
+        updatedAt: course.updatedAt
+      },
+
+      // Enrolled students
+      enrolledStudents: course.enrolledStudents,
+
+      // Progress data
+      progress: course.progress
+    };
+
+    res.json(courseDetails);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Delete course by admin (with all content - videos, cover image)
+export const deleteCourseByAdmin = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    // Delete all videos from Cloudinary
+    for (const video of course.videos) {
+      if (video.public_id) {
+        try {
+          await cloudinary.uploader.destroy(video.public_id, { resource_type: "video" });
+          console.log(`✅ Deleted video: ${video.public_id}`);
+        } catch (error) {
+          console.error(`❌ Error deleting video ${video.public_id}:`, error);
+        }
+      }
+    }
+
+    // Delete cover image from Cloudinary
+    if (course.coverImage && course.coverImage.public_id) {
+      try {
+        await cloudinary.uploader.destroy(course.coverImage.public_id, {
+          resource_type: "image",
+        });
+        console.log(`✅ Deleted cover image: ${course.coverImage.public_id}`);
+      } catch (error) {
+        console.error(`❌ Error deleting cover image:`, error);
+      }
+    }
+
+    await course.deleteOne();
+    res.json({ message: "Course deleted successfully with all content" });
+  } catch (error) {
+    console.error("❌ Error deleting course:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Delete student by admin (from MongoDB and Firebase)
+export const deleteStudent = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    // Delete from Firebase if they used Google or GitHub login
+    if (student.googleId || student.githubId) {
+      try {
+        // Try to find user by email in Firebase
+        const userRecord = await admin.auth().getUserByEmail(student.email);
+        if (userRecord) {
+          await admin.auth().deleteUser(userRecord.uid);
+          console.log(`✅ Deleted student from Firebase: ${student.email}`);
+        }
+      } catch (firebaseError) {
+        console.error(`⚠️ Firebase deletion warning for ${student.email}:`, firebaseError.message);
+        // Continue with MongoDB deletion even if Firebase deletion fails
+      }
+    }
+
+    // Delete from MongoDB
+    await student.deleteOne();
+    res.json({
+      message: "Student deleted successfully from database and Firebase",
+      deletedStudent: {
+        id: student._id,
+        name: student.name,
+        email: student.email
+      }
+    });
+  } catch (error) {
+    console.error("❌ Error deleting student:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Delete instructor by admin (from MongoDB and Firebase) + all their courses
+export const deleteInstructor = async (req, res) => {
+  try {
+    const instructor = await Instructor.findById(req.params.id);
+    if (!instructor) return res.status(404).json({ message: "Instructor not found" });
+
+    // Find all courses by this instructor
+    const instructorCourses = await Course.find({ instructor: instructor._id });
+    console.log(`📚 Found ${instructorCourses.length} courses for instructor ${instructor.name}`);
+
+    // Delete all courses with their content
+    let deletedCoursesCount = 0;
+    let deletedVideosCount = 0;
+    let deletedImagesCount = 0;
+
+    for (const course of instructorCourses) {
+      console.log(`🗑️ Deleting course: ${course.title}`);
+
+      // Delete all videos from Cloudinary
+      for (const video of course.videos) {
+        if (video.public_id) {
+          try {
+            await cloudinary.uploader.destroy(video.public_id, { resource_type: "video" });
+            deletedVideosCount++;
+            console.log(`  ✅ Deleted video: ${video.public_id}`);
+          } catch (error) {
+            console.error(`  ❌ Error deleting video ${video.public_id}:`, error.message);
+          }
+        }
+      }
+
+      // Delete cover image from Cloudinary
+      if (course.coverImage && course.coverImage.public_id) {
+        try {
+          await cloudinary.uploader.destroy(course.coverImage.public_id, {
+            resource_type: "image",
+          });
+          deletedImagesCount++;
+          console.log(`  ✅ Deleted cover image: ${course.coverImage.public_id}`);
+        } catch (error) {
+          console.error(`  ❌ Error deleting cover image:`, error.message);
+        }
+      }
+
+      // Delete course from MongoDB
+      await course.deleteOne();
+      deletedCoursesCount++;
+      console.log(`  ✅ Course deleted from database`);
+    }
+
+    // Delete from Firebase if they used Google or GitHub login
+    if (instructor.googleId || instructor.githubId) {
+      try {
+        // Try to find user by email in Firebase
+        const userRecord = await admin.auth().getUserByEmail(instructor.email);
+        if (userRecord) {
+          await admin.auth().deleteUser(userRecord.uid);
+          console.log(`✅ Deleted instructor from Firebase: ${instructor.email}`);
+        }
+      } catch (firebaseError) {
+        console.error(`⚠️ Firebase deletion warning for ${instructor.email}:`, firebaseError.message);
+        // Continue with MongoDB deletion even if Firebase deletion fails
+      }
+    }
+
+    // Delete instructor from MongoDB
+    await instructor.deleteOne();
+
+    res.json({
+      message: "Instructor and all their courses deleted successfully",
+      deletedInstructor: {
+        id: instructor._id,
+        name: instructor.name,
+        email: instructor.email
+      },
+      deletedContent: {
+        courses: deletedCoursesCount,
+        videos: deletedVideosCount,
+        images: deletedImagesCount
+      }
+    });
+  } catch (error) {
+    console.error("❌ Error deleting instructor:", error);
     res.status(500).json({ message: error.message });
   }
 };
