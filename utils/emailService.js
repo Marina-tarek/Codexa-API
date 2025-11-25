@@ -37,6 +37,8 @@ const createTransporter = () => {
 export const sendResetCodeEmail = async (email, resetCode, userName) => {
   try {
     const transporter = createTransporter();
+    // Verify transporter configuration
+    await transporter.verify();
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -78,7 +80,6 @@ export const sendResetCodeEmail = async (email, resetCode, userName) => {
     console.log("✅ Email sent successfully:", info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error("❌ Error sending email:", error);
     throw new Error("Failed to send email: " + error.message);
   }
 };
