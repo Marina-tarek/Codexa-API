@@ -35,7 +35,14 @@ export const addToCart = async (req, res) => {
             await cart.save();
         }
 
-        await cart.populate("courses", "title price instructor coverImage");
+        await cart.populate({
+            path: "courses",
+            select: "title price instructor coverImage videos",
+            populate: {
+                path: "instructor",
+                select: "name"
+            }
+        });
         res.status(200).json(cart);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -48,10 +55,14 @@ export const addToCart = async (req, res) => {
 export const getCart = async (req, res) => {
     try {
         const studentId = req.user._id;
-        let cart = await Cart.findOne({ student: studentId }).populate(
-            "courses",
-            "title price instructor coverImage"
-        );
+        let cart = await Cart.findOne({ student: studentId }).populate({
+            path: "courses",
+            select: "title price instructor coverImage videos",
+            populate: {
+                path: "instructor",
+                select: "name"
+            }
+        });
 
         if (!cart) {
             return res.status(200).json({ courses: [], totalPrice: 0 });
@@ -97,7 +108,14 @@ export const removeFromCart = async (req, res) => {
         if (cart.totalPrice < 0) cart.totalPrice = 0;
 
         await cart.save();
-        await cart.populate("courses", "title price instructor coverImage");
+        await cart.populate({
+            path: "courses",
+            select: "title price instructor coverImage videos",
+            populate: {
+                path: "instructor",
+                select: "name"
+            }
+        });
 
         res.status(200).json(cart);
     } catch (error) {

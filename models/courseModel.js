@@ -36,6 +36,7 @@ const videoSchema = new mongoose.Schema({
   title: String,
   url: String,
   public_id: String, // لازم نحفظها علشان نحذف من Cloudinary لاحقًا
+  duration: { type: Number, default: 0 }, // 🆕 مدة الفيديو بالدقائق
 });
 
 const courseSchema = new mongoose.Schema(
@@ -76,8 +77,23 @@ const courseSchema = new mongoose.Schema(
       default: "",
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true }, // 🆕 عشان الـ virtual fields تظهر في الـ JSON
+    toObject: { virtuals: true }
+  }
 );
+
+// 🆕 Virtual field لعدد الفيديوهات
+courseSchema.virtual('videoCount').get(function () {
+  return this.videos ? this.videos.length : 0;
+});
+
+// 🆕 Virtual field لإجمالي مدة الكورس بالدقائق
+courseSchema.virtual('totalDuration').get(function () {
+  if (!this.videos || this.videos.length === 0) return 0;
+  return this.videos.reduce((total, video) => total + (video.duration || 0), 0);
+});
 
 const Course = mongoose.model("Course", courseSchema);
 export default Course;

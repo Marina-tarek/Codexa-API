@@ -76,21 +76,21 @@ export const createCourse = async (req, res) => {
 
     // التحقق من الحقول المطلوبة
     if (!title || !description || !category) {
-      return res.status(400).json({ 
-        message: "Title, description, and category are required" 
+      return res.status(400).json({
+        message: "Title, description, and category are required"
       });
     }
 
     // التحقق من صحة level و status
     const validLevels = ["beginner", "intermediate", "advanced"];
     const validStatuses = ["private", "public"];
-    
-    const courseLevel = (level && validLevels.includes(level.toLowerCase())) 
-      ? level.toLowerCase() 
+
+    const courseLevel = (level && validLevels.includes(level.toLowerCase()))
+      ? level.toLowerCase()
       : "beginner";
-    
-    const courseStatus = (status && validStatuses.includes(status.toLowerCase())) 
-      ? status.toLowerCase() 
+
+    const courseStatus = (status && validStatuses.includes(status.toLowerCase()))
+      ? status.toLowerCase()
       : "public";
 
     const uploadedVideos = [];
@@ -98,10 +98,10 @@ export const createCourse = async (req, res) => {
 
     // رفع Cover Image (صورة واحدة)
     if (req.files && req.files.coverImage) {
-      const coverFile = Array.isArray(req.files.coverImage) 
-        ? req.files.coverImage[0] 
+      const coverFile = Array.isArray(req.files.coverImage)
+        ? req.files.coverImage[0]
         : req.files.coverImage;
-      
+
       const coverResult = await cloudinary.uploader.upload(coverFile.path, {
         resource_type: "image",
         folder: "courses_covers",
@@ -120,8 +120,8 @@ export const createCourse = async (req, res) => {
 
     // رفع الفيديوهات
     if (req.files && req.files.videos) {
-      const videoFiles = Array.isArray(req.files.videos) 
-        ? req.files.videos 
+      const videoFiles = Array.isArray(req.files.videos)
+        ? req.files.videos
         : [req.files.videos];
 
       for (const file of videoFiles) {
@@ -130,10 +130,16 @@ export const createCourse = async (req, res) => {
           folder: "courses_videos",
         });
 
+        // 🆕 استخراج مدة الفيديو من Cloudinary (بالثواني) وتحويلها للدقائق
+        const durationInMinutes = result.duration
+          ? Math.round((result.duration / 60) * 100) / 100  // تحويل من ثواني لدقائق مع تقريب لرقمين عشريين
+          : 0;
+
         uploadedVideos.push({
           title: file.originalname,
           url: result.secure_url,
           public_id: result.public_id,
+          duration: durationInMinutes, // 🆕 حفظ المدة بالدقائق
         });
 
         // حذف الملف المؤقت
@@ -187,10 +193,16 @@ export const addVideosToCourse = async (req, res) => {
         folder: "courses_videos",
       });
 
+      // 🆕 استخراج مدة الفيديو من Cloudinary (بالثواني) وتحويلها للدقائق
+      const durationInMinutes = result.duration
+        ? Math.round((result.duration / 60) * 100) / 100  // تحويل من ثواني لدقائق مع تقريب لرقمين عشريين
+        : 0;
+
       newVideos.push({
         title: file.originalname,
         url: result.secure_url,
         public_id: result.public_id,
+        duration: durationInMinutes, // 🆕 حفظ المدة بالدقائق
       });
 
       fs.unlinkSync(file.path);
@@ -365,29 +377,29 @@ export const updateCourse = async (req, res) => {
     if (description !== undefined) course.description = description;
     if (price !== undefined) course.price = price;
     if (category !== undefined) course.category = category;
-    
+
     // التحقق من صحة level قبل التحديث
     if (level !== undefined) {
       if (validLevels.includes(level.toLowerCase())) {
         course.level = level.toLowerCase();
       } else {
-        return res.status(400).json({ 
-          message: `Invalid level. Must be one of: ${validLevels.join(", ")}` 
+        return res.status(400).json({
+          message: `Invalid level. Must be one of: ${validLevels.join(", ")}`
         });
       }
     }
-    
+
     // التحقق من صحة status قبل التحديث
     if (status !== undefined) {
       if (validStatuses.includes(status.toLowerCase())) {
         course.status = status.toLowerCase();
       } else {
-        return res.status(400).json({ 
-          message: `Invalid status. Must be one of: ${validStatuses.join(", ")}` 
+        return res.status(400).json({
+          message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`
         });
       }
     }
-    
+
     if (prerequisites !== undefined) course.prerequisites = prerequisites;
 
     await course.save();
