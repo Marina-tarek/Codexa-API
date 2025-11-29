@@ -10,7 +10,9 @@ import {
     getCourseById,
     deleteCourseByAdmin,
     deleteStudent,
-    deleteInstructor
+    deleteInstructor,
+    getRecentActivity
+
 } from "../controllers/adminController.js";
 import { protectAdmin } from "../middleware/authMiddleware.js";
 
@@ -36,5 +38,9 @@ router.delete("/instructors/:id", protectAdmin, deleteInstructor);
 router.get("/courses", protectAdmin, getAllCourses);
 router.get("/courses/:id", protectAdmin, getCourseById);
 router.delete("/courses/:id", protectAdmin, deleteCourseByAdmin);
+
+// post routes
+router.get("/activity", protectAdmin, getRecentActivity);
+
 
 export default router;

@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cloudinary from "../utils/cloudinary.js";
 import admin from "../config/firebaseAdmin.js";
+import CommunityPost from "../models/communityPostModel.js";
 
 export const loginAdmin = async (req, res) => {
   try {
@@ -326,6 +327,100 @@ export const deleteInstructor = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error deleting instructor:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// export const getRecentActivity = async (req, res) => {
+//   try {
+//     const latestPost = await CommunityPost.findOne()
+//       .populate("author", "name profileImage")
+//       .sort({ createdAt: -1 });
+
+//     const latestStudent = await Student.findOne()
+//       .select("name profileImage")
+//       .sort({ createdAt: -1 });
+
+//     const latestInstructor = await Instructor.findOne()
+//       .select("name profileImage")
+//       .sort({ createdAt: -1 });
+
+//     const latestCourse = await Course.findOne()
+//       .populate("instructor", "name")
+//       .sort({ createdAt: -1 });
+
+//     res.json({
+//       post: latestPost,
+//       student: latestStudent,
+//       instructor: latestInstructor,
+//       course: latestCourse,
+//     });
+
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+export const getRecentActivity = async (req, res) => {
+  try {
+    const latestPost = await CommunityPost.findOne()
+      .populate("author", "name profileImage")
+      .sort({ createdAt: -1 });
+
+    const latestStudent = await Student.findOne()
+      .select("name profileImage createdAt")
+      .sort({ createdAt: -1 });
+
+    const latestInstructor = await Instructor.findOne()
+      .select("name profileImage createdAt")
+      .sort({ createdAt: -1 });
+
+    const latestCourse = await Course.findOne()
+      .populate("instructor", "name")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      latestPost: latestPost
+        ? {
+          id: latestPost._id,
+          authorName: latestPost.author?.name,
+          authorImage: latestPost.author?.profileImage,
+          type: latestPost.type,
+          content: latestPost.content,
+          createdAt: latestPost.createdAt,
+        }
+        : null,
+
+      latestStudent: latestStudent
+        ? {
+          id: latestStudent._id,
+          name: latestStudent.name,
+          profileImage: latestStudent.profileImage,
+          createdAt: latestStudent.createdAt,
+        }
+        : null,
+
+      latestInstructor: latestInstructor
+        ? {
+          id: latestInstructor._id,
+          name: latestInstructor.name,
+          profileImage: latestInstructor.profileImage,
+          createdAt: latestInstructor.createdAt,
+        }
+        : null,
+
+      latestCourse: latestCourse
+        ? {
+          id: latestCourse._id,
+          title: latestCourse.title,
+          price: latestCourse.price,
+          coverImage: latestCourse.coverImage?.url || null,
+          instructorName: latestCourse.instructor?.name,
+          createdAt: latestCourse.createdAt,
+        }
+        : null,
+    });
+
+  } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
