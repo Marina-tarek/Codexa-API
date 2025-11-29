@@ -331,35 +331,7 @@ export const deleteInstructor = async (req, res) => {
   }
 };
 
-// export const getRecentActivity = async (req, res) => {
-//   try {
-//     const latestPost = await CommunityPost.findOne()
-//       .populate("author", "name profileImage")
-//       .sort({ createdAt: -1 });
-
-//     const latestStudent = await Student.findOne()
-//       .select("name profileImage")
-//       .sort({ createdAt: -1 });
-
-//     const latestInstructor = await Instructor.findOne()
-//       .select("name profileImage")
-//       .sort({ createdAt: -1 });
-
-//     const latestCourse = await Course.findOne()
-//       .populate("instructor", "name")
-//       .sort({ createdAt: -1 });
-
-//     res.json({
-//       post: latestPost,
-//       student: latestStudent,
-//       instructor: latestInstructor,
-//       course: latestCourse,
-//     });
-
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
+// Get recent activity
 export const getRecentActivity = async (req, res) => {
   try {
     const latestPost = await CommunityPost.findOne()
