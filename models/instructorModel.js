@@ -85,6 +85,12 @@ const instructorSchema = new mongoose.Schema(
         url: String,
       },
     ],
+
+    // Revenue tracking
+    totalRevenue: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

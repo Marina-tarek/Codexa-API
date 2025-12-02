@@ -3,6 +3,8 @@ import Order from "../models/orderModel.js";
 import Cart from "../models/cartModel.js";
 import Student from "../models/studentModel.js";
 import Course from "../models/courseModel.js";
+import Payment from "../models/paymentModel.js";
+import Instructor from "../models/instructorModel.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -120,6 +122,27 @@ export const webhook = async (req, res) => {
                     { _id: { $in: courseIds } },
                     { $addToSet: { enrolledStudents: studentId } }
                 );
+
+                // ✅ Create Payment records for each course and update instructor revenue
+                for (const course of cart.courses) {
+                    const payment = await Payment.create({
+                        student: studentId,
+                        course: course._id,
+                        instructor: course.instructor,
+                        amount: course.price,
+                        paymentStatus: "completed",
+                        paymentMethod: "stripe",
+                        transactionId: `${session.id}_${course._id}`,
+                    });
+
+                    // Update instructor's total revenue
+                    await Instructor.findByIdAndUpdate(
+                        course.instructor,
+                        { $inc: { totalRevenue: payment.instructorRevenue } }
+                    );
+
+                    console.log(`💰 Payment recorded: Course ${course.title}, Instructor gets $${payment.instructorRevenue}, Platform gets $${payment.platformFee}`);
+                }
 
                 // Clear Cart
                 cart.courses = [];

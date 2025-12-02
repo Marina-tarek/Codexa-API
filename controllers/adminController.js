@@ -30,11 +30,23 @@ export const getDashboardStats = async (req, res) => {
     const instructors = await Instructor.countDocuments();
     const students = await Student.countDocuments();
     const courses = await Course.countDocuments();
-    const payments = await Payment.find();
+    // ✅ Get only completed payments
+    const payments = await Payment.find({ paymentStatus: "completed" });
 
+    // Calculate revenue breakdown
     const totalRevenue = payments.reduce((acc, p) => acc + (p.amount || 0), 0);
+    const platformRevenue = payments.reduce((acc, p) => acc + (p.platformFee || 0), 0);
+    const instructorRevenue = payments.reduce((acc, p) => acc + (p.instructorRevenue || 0), 0);
 
-    res.json({ instructors, students, courses, totalRevenue });
+    res.json({
+      instructors,
+      students,
+      courses,
+      totalRevenue,
+      platformRevenue, // Admin's share
+      instructorRevenue, // Total paid to instructors
+      completedPayments: payments.length
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

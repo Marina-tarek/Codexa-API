@@ -6,20 +6,6 @@ import cloudinary from "../utils/cloudinary.js";
 import { verifyFirebaseToken } from "../utils/verifyFirebaseToken.js";
 import { sendResetCodeEmail } from "../utils/emailService.js";
 
-// export const registerInstructor = async (req, res) => {
-//   try {
-//     const { name, email, password } = req.body;
-//     const exists = await Instructor.findOne({ email });
-//     if (exists) return res.status(400).json({ message: "Email already registered" });
-
-//     const instructor = await Instructor.create({ name, email, password });
-//     const token = jwt.sign({ id: instructor._id, role: "Instructor" }, process.env.JWT_SECRET, { expiresIn: "30d" });
-
-//     res.json({ token, instructor });
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
 const generateToken = (instructor) => {
   return jwt.sign(
     { id: instructor._id, role: "Instructor" },
@@ -132,16 +118,6 @@ export const createCourse = async (req, res) => {
   }
 };
 
-// export const getInstructorStats = async (req, res) => {
-//   try {
-//     const courses = await Course.find({ instructor: req.user._id });
-//     const totalStudents = courses.reduce((acc, c) => acc + c.students.length, 0);
-//     const totalSales = courses.reduce((acc, c) => acc + c.sales, 0);
-//     res.json({ totalCourses: courses.length, totalStudents, totalSales });
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
 export const getInstructorStats = async (req, res) => {
   try {
     const courses = await Course.find({ instructor: req.user._id }).select("_id title enrolledStudents");
@@ -163,7 +139,7 @@ export const getInstructorStats = async (req, res) => {
     // revenue from payments
     const Payment = (await import("../models/paymentModel.js")).default;
     const payments = await Payment.find({ instructor: req.user._id, paymentStatus: "completed" });
-    const totalRevenue = payments.reduce((acc, p) => acc + (p.amount || 0), 0);
+    const totalRevenue = payments.reduce((acc, p) => acc + (p.instructorRevenue || 0), 0);
 
     // online students (placeholder)
     const onlineStudents = 0;
@@ -233,7 +209,7 @@ export const getInstructorProfile = async (req, res) => {
       Follow.countDocuments({ follower: instructor._id }),
     ]);
     const payments = await Payment.find({ instructor: instructor._id, paymentStatus: "completed" });
-    const revenue = payments.reduce((acc, p) => acc + (p.amount || 0), 0);
+    const revenue = payments.reduce((acc, p) => acc + (p.instructorRevenue || 0), 0);
     res.json({ instructor, followers, following, revenue });
   } catch (error) {
     res.status(500).json({ message: error.message });
