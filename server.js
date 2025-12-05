@@ -25,6 +25,7 @@ import analyticsRoutes from "./routes/analyticsRoutes.js";
 import favouriteRoutes from "./routes/favouriteRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -99,6 +100,7 @@ const startServer = async () => {
     app.use("/api/favourites", favouriteRoutes);
     app.use("/api/cart", cartRoutes);
     app.use("/api/orders", orderRoutes);
+    app.use("/api/ai", aiRoutes)
     // ✅ إعداد Socket.IO
     io.on("connection", (socket) => {
       console.log("🟢 User connected:", socket.id);
