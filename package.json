@@ -7,6 +7,7 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^1.41.3",
     "cors": "^2.8.5",
@@ -14,6 +15,7 @@
     "express": "^4.18.2",
     "firebase": "^12.4.0",
     "firebase-admin": "^13.5.0",
+    "form-data": "^4.0.5",
     "groq-sdk": "^0.37.0",
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.0.0",
