@@ -42,7 +42,7 @@ if (storageMode === "cloudinary") {
   const fileFilter = (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     if (file.fieldname === "profileImage") {
-      if ([".png", ".jpg", ".jpeg"].includes(ext)) cb(null, true);
+      if ([".png", ".jpg", ".jpeg",".webp"].includes(ext)) cb(null, true);
       else cb(new Error("Images only"));
     } else {
       if ([".mp4", ".mov", ".avi", ".mkv"].includes(ext)) cb(null, true);
