@@ -353,9 +353,14 @@ export const handle100msWebhook = async (req, res) => {
 
         console.log("📡 100ms Webhook received:", type);
 
-        if (type === "recording.success") {
-            const { room_id, recording_url, duration } = data;
+         if (type === "recording.success" || type === "beam.recording.success") {
+            const { room_id, location, duration } = data;
+            const recording_url = location; // 100ms provides 'location' as the URL
 
+            if (!recording_url) {
+                console.error("❌ No recording URL (location) found in webhook data");
+                return res.status(400).json({ message: "No recording URL found" });
+            }
             const session = await LiveSession.findOne({ roomId: room_id });
 
             if (!session) {
