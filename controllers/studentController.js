@@ -76,7 +76,7 @@ export const socialLoginStudent = async (req, res) => {
       student = await Student.create({
         name: name || "New User",
         email,
-        profileImage: picture || "/uploads/default-avatar.png",
+        profileImage: picture || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRN73NiiE0ElYaFozvm3bfD6O-THsF-5DoBI7yVYFKg8DxubwAGxX5nBkQ&s",
         authProvider: provider,
         emailVerified: true,
       });

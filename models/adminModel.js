@@ -17,7 +17,7 @@ const adminSchema = new mongoose.Schema({
   },
   profileImage: {
     type: String,
-    default: "/uploads/admin-avatar.png",
+    default: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRN73NiiE0ElYaFozvm3bfD6O-THsF-5DoBI7yVYFKg8DxubwAGxX5nBkQ&s",
   },
   role: {
     type: String,
