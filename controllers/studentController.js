@@ -389,3 +389,18 @@ export const resetPasswordStudent = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+export const updateStudentProfile = async (req, res) => {
+  try {
+    const student = await Student.findById(req.user._id);
+    if (!student) return res.status(404).json({ message: "Not found" });
+    const { name } = req.body;
+    if (name) student.name = name;
+    if (req.file?.path || req.file?.secure_url) {
+      student.profileImage = req.file.secure_url || req.file.path;
+    }
+    await student.save();
+    res.json({ message: "Profile updated", student });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }};
