@@ -142,8 +142,8 @@ export const getMyCourses = async (req, res) => {
     const student = await Student.findById(req.user._id)
       .populate({
         path: "enrolledCourses",
-        select: "title description price instructor",
-        populate: { path: "instructor", select: "name email" },
+        select: "title description price coverImage instructor",
+        populate: { path: "instructor", select: "name email profileImage" },
       });
 
     if (!student) return res.status(404).json({ message: "Student not found" });
@@ -403,4 +403,5 @@ export const updateStudentProfile = async (req, res) => {
     res.json({ message: "Profile updated", student });
   } catch (error) {
     res.status(500).json({ message: error.message });
-  }};
+  }
+};

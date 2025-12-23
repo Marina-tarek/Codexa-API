@@ -69,8 +69,13 @@ export const textToVoice = async (req, res) => {
         return res.send(response.data);
 
     } catch (error) {
-        console.error("TTS Error:", error.response?.data || error.message);
-        return res.status(500).json({ error: "TTS failed" });
+        console.error("🔥 ElevenLabs TTS ERROR RAW:", error?.response?.data?.toString());
+        console.error("🔥 STATUS:", error?.response?.status);
+        console.error("🔥 HEADERS:", error?.response?.headers);
+
+        res.status(500).json({ error: "TTS failed", details: error.response?.data });
+
+
     }
 };
 
