@@ -17,7 +17,7 @@ const create100msToken = async (roomId, userId, role) => {
         access_key: HMS_APP_ACCESS_KEY,
         room_id: roomId,
         user_id: userId,
-        role: role, // "host" or "guest"
+        role: role, // "host" or "student"
         type: "app",
         version: 2,
         iat: Math.floor(Date.now() / 1000),
@@ -234,7 +234,7 @@ export const joinLiveSession = async (req, res) => {
 
         // Determine role
         const isHost = session.instructor.toString() === req.user._id.toString();
-        const role = isHost ? "host" : "guest";
+        const role = isHost ? "host" : "student";
 
         // Generate 100ms auth token
         const token = await create100msToken(
